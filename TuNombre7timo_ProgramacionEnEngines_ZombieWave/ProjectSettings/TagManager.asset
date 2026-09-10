@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 3
   tags:
   - Floor
+  - Zombie
+  - PowerUp
   layers:
   - Default
   - TransparentFX
@@ -47,6 +49,18 @@ TagManager:
     locked: 0
   - name: Wall
     uniqueID: 3295389155
+    locked: 0
+  - name: Spawner
+    uniqueID: 2336009367
+    locked: 0
+  - name: PowerUp
+    uniqueID: 2133768001
+    locked: 0
+  - name: Zombie
+    uniqueID: 3961340297
+    locked: 0
+  - name: Player
+    uniqueID: 4073780987
     locked: 0
   m_RenderingLayers:
   - Default
