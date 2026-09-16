@@ -1,0 +1,65 @@
+using UnityEngine;
+
+public class ZombieMove : MonoBehaviour
+{
+    #region Referencias
+    [SerializeField] private Transform player;
+    private Rigidbody2D rb;
+    #endregion
+
+    #region Variables
+    [SerializeField] private float speedMovementZombie = 2f;
+    [SerializeField] private float health = 6;
+    #endregion
+
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+    }
+
+    void Start()
+    {
+        // lo busco por tag 
+        if (player == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+                player = playerObj.transform;
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if (player == null) return;
+
+        FollowPlayer();
+    }
+
+    #region Movimiento
+    private void FollowPlayer()
+    {
+        Vector2 direction = (player.position - transform.position).normalized;
+        rb.linearVelocity = direction * speedMovementZombie;
+    }
+    #endregion
+
+    #region Vida/Muerte
+    public void TakeDamage(float amount)
+    {
+        health -= amount;
+
+        if (health <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        if (ZombieSpawner.Instance != null)
+            ZombieSpawner.Instance.NotifyZombieKilled();
+
+        Destroy(gameObject);
+    }
+    #endregion
+}

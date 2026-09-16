@@ -1,0 +1,116 @@
+using System.Collections;
+using UnityEngine;
+using TMPro;
+
+public class ZombieSpawner : MonoBehaviour
+{
+    #region Singleton
+    public static ZombieSpawner Instance;
+    #endregion
+
+    #region Referencias
+    [SerializeField] private Transform[] spawnPoints;
+    [SerializeField] private GameObject zombiePrefab;
+    [SerializeField] private TextMeshProUGUI waveMessageText; 
+    [SerializeField] private TextMeshProUGUI remainingZombiesText; 
+    public SceneManager script_sceneManager;
+    #endregion
+
+
+    #region Variables
+    [SerializeField] public float spawnInterval = 3f;
+    [SerializeField] private float waveMessageDuration = 3f;
+
+    private readonly int[] waveSizes = { 20, 25, 30 };
+    private int currentWaveIndex = 0;
+
+    private int spawnedCount = 0;
+    private int killedCount = 0;
+    #endregion
+
+    void Awake()
+    {
+        Instance = this;
+    }
+
+    void Start()
+    {
+        if (waveMessageText != null)
+            waveMessageText.gameObject.SetActive(false);
+
+        StartCoroutine(RunWaves());
+    }
+
+    #region Spawn
+    private void SpawnZombie()
+    {
+        if (spawnPoints.Length == 0 || zombiePrefab == null) return;
+
+        Transform point = spawnPoints[Random.Range(0, spawnPoints.Length)];
+        Instantiate(zombiePrefab, point.position, point.rotation);
+    }
+    #endregion
+
+    #region Conteo de muertes
+    // Este método lo llamo en zombieMove
+    public void NotifyZombieKilled()
+    {
+        killedCount++;
+        int remaining = waveSizes[currentWaveIndex] - killedCount;
+        UpdateRemainingText(remaining);
+    }
+
+    private void UpdateRemainingText(int remaining)
+    {
+        if (remainingZombiesText != null)
+            remainingZombiesText.text = "" + remaining;
+    }
+    #endregion
+
+    #region Oleadas
+    private IEnumerator RunWaves()
+    {
+        for (currentWaveIndex = 0; currentWaveIndex < waveSizes.Length; currentWaveIndex++)
+        {
+            yield return StartCoroutine(RunWave(waveSizes[currentWaveIndex]));
+            yield return StartCoroutine(ShowWaveCompleteMessage());
+        }
+
+        // Se terminaron todas las oleadas -> victoria
+        if (script_sceneManager != null)
+            script_sceneManager.LoadWin();
+    }
+
+    private IEnumerator RunWave(int totalZombies)
+    {
+        spawnedCount = 0;
+        killedCount = 0;
+        UpdateRemainingText(totalZombies);
+
+        // Invocar 1 zombie cada cierto tiempo hasta llegar al total de la oleada
+        while (spawnedCount < totalZombies)
+        {
+            SpawnZombie();
+            spawnedCount++;
+            yield return new WaitForSeconds(spawnInterval);
+        }
+
+        // Esperar hasta que maten a todos los zombies invocados
+        while (killedCount < totalZombies)
+        {
+            yield return null;
+        }
+    }
+
+    private IEnumerator ShowWaveCompleteMessage()
+    {
+        if (waveMessageText != null)
+            waveMessageText.gameObject.SetActive(true);
+
+        yield return new WaitForSeconds(waveMessageDuration);
+
+        if (waveMessageText != null)
+            waveMessageText.gameObject.SetActive(false);
+    }
+    #endregion
+}
