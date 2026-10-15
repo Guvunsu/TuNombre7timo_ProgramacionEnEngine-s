@@ -19,6 +19,7 @@ public class FSM_EnemyMovement : MonoBehaviour
     public Transform point3;
     public Transform point4;
     public Transform point5;
+    public Transform point6;
 
     [Header("Listas/Listas ligadas")]
     LinkedList<Transform> pointsToVisit = new LinkedList<Transform>();
@@ -170,6 +171,7 @@ public class FSM_EnemyMovement : MonoBehaviour
         pointsToVisit.AddLast(point3);
         pointsToVisit.AddLast(point4);
         pointsToVisit.AddLast(point5);
+        pointsToVisit.AddLast(point6);
     }
     LinkedListNode<Transform> NextNode(LinkedListNode<Transform> node)
     {

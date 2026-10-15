@@ -1,0 +1,1 @@
+hacer un raycast para el calculo de las paredes y detecte que pueda ir a ese lado y que se pueda mover 

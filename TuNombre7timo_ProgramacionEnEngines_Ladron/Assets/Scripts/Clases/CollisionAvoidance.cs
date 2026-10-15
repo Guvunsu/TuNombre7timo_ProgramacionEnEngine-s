@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PathFollowings : MonoBehaviour
+public class CollisionAvoidance : MonoBehaviour
 {
     [Header("Configuracion de Agente")]
     [SerializeField] private Transform target;
