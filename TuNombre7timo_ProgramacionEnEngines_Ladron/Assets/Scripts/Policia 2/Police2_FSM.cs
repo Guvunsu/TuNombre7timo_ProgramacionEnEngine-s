@@ -22,58 +22,41 @@ public class Police2_FSM : WanderSteeringBehaviour
 
     [SerializeField] private float sightRange = 6f;
     [SerializeField] private float fov = 90f;
-
     [SerializeField] private float eyeHeight = 0.5f;
-
     [SerializeField] private LayerMask sightBlockMask;
-
     [SerializeField] private float catchDistance = 1.4f;
-
     [SerializeField] private float loseTime = 2f;
 
     private float lostTimer;
-
     private Vector3 lastSeenPos;
-
     private bool returningToZone;
 
     protected override void Awake()
     {
         base.Awake();
-
         lostTimer = loseTime;
-
         lastSeenPos = transform.position;
 
         if (player == null)
         {
-            Debug.LogWarning(
-                "Police2_FSM: falta asignar Player",
-                this);
+            Debug.LogWarning("Police2_FSM: falta asignar Player",this);
         }
 
         if (wanderCenter == null)
         {
-            Debug.LogWarning(
-                "Police2_FSM: falta Wander Center",
-                this);
+            Debug.LogWarning("Police2_FSM: falta Wander Center",this);
         }
     }
 
     private void ChangeState(State newState)
     {
-        if (state == newState)
-            return;
+        if (state == newState) return;
 
         if (showStateLogs)
         {
-            Debug.Log(
-                $"Police2: {state} -> {newState}",
-                this);
+            Debug.Log($"Police2: {state} -> {newState}",this);
         }
-
         state = newState;
-
         if (state == State.CHASE)
         {
             lostTimer = loseTime;
@@ -83,7 +66,6 @@ public class Police2_FSM : WanderSteeringBehaviour
     private void FixedUpdate()
     {
         bool seesPlayer = CanSeePlayer();
-
         if (seesPlayer)
         {
             lastSeenPos = player.position;
@@ -100,22 +82,16 @@ public class Police2_FSM : WanderSteeringBehaviour
                     ChangeState(State.CHASE);
                     break;
                 }
-
                 steering = WanderInsideZone();
-
                 break;
-
             case State.CHASE:
-
                 if (seesPlayer)
                 {
                     lostTimer = loseTime;
 
-                    steering =
-                        Seek(player.position);
+                    steering =Seek(player.position);
 
-                    if (DistTo(player.position)
-                        <= catchDistance)
+                    if (DistTo(player.position)<= catchDistance)
                     {
                         ChangeState(State.CATCH);
                     }
@@ -123,24 +99,19 @@ public class Police2_FSM : WanderSteeringBehaviour
                 {
                     lostTimer -= Time.fixedDeltaTime;
 
-                    steering =
-                        Arrive(lastSeenPos);
+                    steering = Arrive(lastSeenPos);
 
                     if (lostTimer <= 0f)
                     {
                         ChangeState(State.WANDER);
                     }
                 }
-
                 break;
-
             case State.CATCH:
 
-                steering =
-                    Arrive(player.position);
+                steering = Arrive(player.position);
 
-                if (DistTo(player.position)
-                    > catchDistance * 1.5f)
+                if (DistTo(player.position) > catchDistance * 1.5f)
                 {
                     ChangeState(State.CHASE);
                 }
@@ -155,70 +126,44 @@ public class Police2_FSM : WanderSteeringBehaviour
         if (wanderCenter == null)
             return Wander();
 
-        float distance =
-            DistTo(wanderCenter.position);
+        float distance =DistTo(wanderCenter.position);
 
         if (distance > wanderAreaRadius)
         {
             returningToZone = true;
-        } else if (distance <
-                   wanderAreaRadius * 0.6f)
+        } else if (distance < wanderAreaRadius * 0.6f)
         {
             returningToZone = false;
         }
 
         if (returningToZone)
         {
-            return Arrive(
-                wanderCenter.position);
+            return Arrive(wanderCenter.position);
         }
-
         return Wander();
     }
 
     private bool CanSeePlayer()
     {
-        if (player == null)
-            return false;
+        if (player == null) return false;
 
-        Vector3 toPlayer =
-            Flat(player.position -
-                 transform.position);
+        Vector3 toPlayer =Flat(player.position-transform.position);
+        float distance = toPlayer.magnitude;
 
-        float distance =
-            toPlayer.magnitude;
+        if (distance > sightRange) return false;
+        if (distance < 0.01f) return false;
 
-        if (distance > sightRange)
-            return false;
+        float angle =Vector3.Angle( facing,toPlayer.normalized);
 
-        if (distance < 0.01f)
-            return false;
+        if (angle > fov * 0.5f) return false;
 
-        float angle =
-            Vector3.Angle(
-                facing,
-                toPlayer.normalized);
+        Vector3 origin =transform.position + Vector3.up * eyeHeight;
+        Vector3 target = player.position + Vector3.up * eyeHeight;
 
-        if (angle > fov * 0.5f)
-            return false;
-
-        Vector3 origin =
-            transform.position +
-            Vector3.up * eyeHeight;
-
-        Vector3 target =
-            player.position +
-            Vector3.up * eyeHeight;
-
-        if (Physics.Linecast(
-            origin,
-            target,
-            sightBlockMask,
-            QueryTriggerInteraction.Ignore))
+        if (Physics.Linecast(origin,target,sightBlockMask,QueryTriggerInteraction.Ignore))
         {
             return false;
         }
-
         return true;
     }
 
@@ -229,54 +174,25 @@ public class Police2_FSM : WanderSteeringBehaviour
         if (wanderCenter != null)
         {
             Gizmos.color = Color.blue;
-
-            Gizmos.DrawWireSphere(
-                wanderCenter.position,
-                wanderAreaRadius);
+            Gizmos.DrawWireSphere(wanderCenter.position,wanderAreaRadius);
         }
 
-        if (!Application.isPlaying)
-            return;
+        if (!Application.isPlaying) return;
 
-        Vector3 origin =
-            transform.position +
-            Vector3.up * eyeHeight;
-
+        Vector3 origin = transform.position + Vector3.up * eyeHeight;
         Gizmos.color = Color.white;
+        Vector3 left = Quaternion.Euler( 0f,-fov*0.5f,0f)*facing;
+        Vector3 right = Quaternion.Euler(0f,fov * 0.5f,0f)*facing;
+        Gizmos.DrawLine(origin,origin + left * sightRange);
 
-        Vector3 left =
-            Quaternion.Euler(
-                0f,
-                -fov * 0.5f,
-                0f)
-            * facing;
+        Gizmos.DrawLine(origin,origin + right * sightRange);
 
-        Vector3 right =
-            Quaternion.Euler(
-                0f,
-                fov * 0.5f,
-                0f)
-            * facing;
-
-        Gizmos.DrawLine(
-            origin,
-            origin + left * sightRange);
-
-        Gizmos.DrawLine(
-            origin,
-            origin + right * sightRange);
-
-        Gizmos.DrawLine(
-            origin,
-            origin + facing * sightRange);
+        Gizmos.DrawLine(origin,origin + facing * sightRange);
 
         if (player != null)
         {
             Gizmos.color = Color.red;
-
-            Gizmos.DrawWireSphere(
-                player.position,
-                catchDistance);
+            Gizmos.DrawWireSphere(player.position,catchDistance);
         }
     }
 }

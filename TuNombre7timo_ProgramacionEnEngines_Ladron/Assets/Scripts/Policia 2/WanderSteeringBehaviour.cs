@@ -9,19 +9,19 @@ using UnityEngine;
 public abstract class WanderSteeringBehaviour : Police2CollisionAvoidance
 {
     [Header("Wander")]
-    [SerializeField] private float circleDistance = 2f;      // qué tan lejos está el círculo del agente
-    [SerializeField] private float circleRadius = 1.5f;      // radio del círculo (más grande = giros más amplios)
-    [SerializeField] private float angleChange = 300f;       // qué tan rápido se mueve al azar el punto del círculo
+    [SerializeField] private float circleDistance = 2f;      
+    [SerializeField] private float circleRadius = 1.5f;      
+    [SerializeField] private float angleChange = 300f;       
     [SerializeField] private float wanderWeight = 0.8f;
 
     [Header("Anti-atoramiento")]
-    [SerializeField] private float stuckSpeed = 0.25f;       // por debajo de esta velocidad cuenta como "parado"
-    [SerializeField] private float stuckTime = 0.6f;         // segundos parado antes de activar el escape
-    [SerializeField] private float escapeDuration = 0.8f;    // cuánto dura el escape
+    [SerializeField] private float stuckSpeed = 0.25f;
+    [SerializeField] private float stuckTime = 0.6f;
+    [SerializeField] private float escapeDuration = 0.8f;
 
-    private float wanderAngle;                               // ángulo (radianes) del punto sobre el círculo
-    private Vector3 circleCenter;                            // gizmos
-    private Vector3 wanderTarget;                            // gizmos
+    private float wanderAngle;
+    private Vector3 circleCenter;
+    private Vector3 wanderTarget;
 
     private float stuckTimer;
     private float escapeTimer;
@@ -33,14 +33,11 @@ public abstract class WanderSteeringBehaviour : Police2CollisionAvoidance
 
         wanderAngle = Random.Range(0f, Mathf.PI * 2f);
     }
-
-    // Devuelve la fuerza de steering (NO mueve nada). Se llama desde FixedUpdate.
     protected Vector3 Wander()
     {
         float dt = Time.fixedDeltaTime;
         Vector3 heading = Flat(facing).normalized;
 
-        // --- MODO ESCAPE: se aleja de donde se atoró ---
         if (escapeTimer > 0f)
         {
             escapeTimer -= dt;
@@ -51,7 +48,7 @@ public abstract class WanderSteeringBehaviour : Police2CollisionAvoidance
             return Seek(wanderTarget);
         }
 
-        // --- DETECTAR ATORAMIENTO ---
+        //detecto que me atoro
         if (velocity.magnitude < stuckSpeed) stuckTimer += dt;
         else stuckTimer = 0f;
 
@@ -68,8 +65,6 @@ public abstract class WanderSteeringBehaviour : Police2CollisionAvoidance
 
             return Seek(transform.position + escapeDir * circleDistance * 1.5f);
         }
-
-        // --- WANDER NORMAL ---
         circleCenter = transform.position + heading * circleDistance;
 
         if (IsAvoiding)
@@ -78,7 +73,6 @@ public abstract class WanderSteeringBehaviour : Police2CollisionAvoidance
             wanderAngle = Mathf.Atan2(LastAvoidance.z, LastAvoidance.x);
         } else
         {
-            // Perturbación pequeña del ángulo (depende del tiempo, no de los FPS)
             wanderAngle += Random.Range(-1f, 1f) * angleChange * Mathf.Deg2Rad * dt;
         }
 
@@ -94,14 +88,11 @@ public abstract class WanderSteeringBehaviour : Police2CollisionAvoidance
     protected override void OnDrawGizmos()
     {
         base.OnDrawGizmos();
-
-        if (!Application.isPlaying)
-            return;
+        if (!Application.isPlaying) return;
 
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(circleCenter, circleRadius);
-
-        Gizmos.color = escapeTimer > 0f ? Color.magenta : Color.red;   // magenta = modo escape
+        Gizmos.color = escapeTimer > 0f ? Color.magenta : Color.red;
         Gizmos.DrawSphere(wanderTarget, 0.15f);
         Gizmos.DrawLine(transform.position, wanderTarget);
     }

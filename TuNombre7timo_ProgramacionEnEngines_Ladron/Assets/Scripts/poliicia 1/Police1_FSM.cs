@@ -1,6 +1,4 @@
-
 using UnityEngine;
-
 public class Police1_FSM : PathFollowingBehaviour
 {
     private enum State
@@ -21,6 +19,8 @@ public class Police1_FSM : PathFollowingBehaviour
     [SerializeField] private Transform node2;
     [SerializeField] private Transform node3;
     [SerializeField] private Transform node4;
+    [SerializeField] private Transform node5;
+    [SerializeField] private Transform node6;
     [SerializeField] private float idleTime = 2f;
 
     [Header("Jugador y vision")]
@@ -38,28 +38,21 @@ public class Police1_FSM : PathFollowingBehaviour
     protected override void Awake()
     {
         base.Awake();
-
         FillPath();
-
         lastSeenPos = transform.position;
         idleTimer = idleTime;
         lostTimer = loseTime;
 
         if (!HasPath)
         {
-            Debug.LogError(
-                "Police1_FSM: asigna al menos un nodo.",
-                this);
-
+            Debug.LogError("Police1_FSM: asigna al menos un nodo.",this);
             enabled = false;
             return;
         }
 
         if (player == null)
         {
-            Debug.LogWarning(
-                "Police1_FSM: falta asignar el jugador.",
-                this);
+            Debug.LogWarning("Police1_FSM: falta asignar el jugador.",this);
         }
     }
 
@@ -69,6 +62,8 @@ public class Police1_FSM : PathFollowingBehaviour
         AddNode(node2);
         AddNode(node3);
         AddNode(node4);
+        AddNode(node5);
+        AddNode(node6);
     }
 
     private void ChangeState(State newState)
@@ -78,16 +73,13 @@ public class Police1_FSM : PathFollowingBehaviour
 
         if (showStateLogs)
         {
-            Debug.Log(
-                $"Policia: {state} -> {newState}",
-                this);
+            Debug.Log($"Policia: {state} -> {newState}",this);
         }
 
         state = newState;
 
         if (newState == State.IDLE)
             idleTimer = idleTime;
-
         if (newState == State.CHASE)
             lostTimer = loseTime;
     }
@@ -95,7 +87,10 @@ public class Police1_FSM : PathFollowingBehaviour
     private void FixedUpdate()
     {
         if (!HasPath)
+        {
+            Debug.LogWarning("Police1_FSM: el nodo actual ya no existe", this);
             return;
+        }
 
         bool sees = CanSeePlayer();
 
@@ -177,13 +172,11 @@ public class Police1_FSM : PathFollowingBehaviour
 
                 steering = Arrive(player.position);
 
-                if (DistTo(player.position) >
-                    catchDistance * 1.5f)
+                if (DistTo(player.position) > catchDistance * 1.5f)
                 {
                     ChangeState(State.CHASE);
                 }
-
-                // Aqui puedes activar tu sistema de Game Over.
+                // Aqui! sistema de Game Over.
                 break;
 
             case State.COME_BACK:
@@ -206,44 +199,30 @@ public class Police1_FSM : PathFollowingBehaviour
                 }
                 break;
         }
-
         Move(steering);
     }
 
     private bool CanSeePlayer()
     {
-        if (player == null)
-            return false;
+        if (player == null) return false;
 
-        Vector3 toPlayer = Flat(
-            player.position - transform.position);
+        Vector3 toPlayer = Flat(player.position - transform.position);
 
         float distance = toPlayer.magnitude;
 
-        if (distance > sightRange || distance < 0.001f)
-            return false;
+        if (distance > sightRange || distance < 0.001f) return false;
 
-        float angle = Vector3.Angle(
-            facing, toPlayer.normalized);
+        float angle = Vector3.Angle(facing, toPlayer.normalized);
 
-        if (angle > fov * 0.5f)
-            return false;
+        if (angle > fov * 0.5f) return false;
 
-        Vector3 origin = transform.position
-                         + Vector3.up * 0.5f;
+        Vector3 origin = transform.position + Vector3.up * 0.5f;
+        Vector3 target = player.position + Vector3.up * 0.5f;
 
-        Vector3 target = player.position
-                         + Vector3.up * 0.5f;
-
-        if (Physics.Linecast(
-            origin,
-            target,
-            sightBlockMask,
-            QueryTriggerInteraction.Ignore))
+        if (Physics.Linecast(origin,target,sightBlockMask,QueryTriggerInteraction.Ignore))
         {
             return false;
         }
-
         return true;
     }
 
@@ -254,35 +233,22 @@ public class Police1_FSM : PathFollowingBehaviour
         if (!Application.isPlaying)
             return;
 
-        Vector3 origin = transform.position
-                         + Vector3.up * 0.5f;
+        Vector3 origin = transform.position + Vector3.up * 0.5f;
 
         Gizmos.color = Color.white;
+        Gizmos.DrawWireSphere(transform.position, sightRange);
 
-        Gizmos.DrawWireSphere(
-            transform.position, sightRange);
+        Vector3 left = Quaternion.Euler(0f, -fov * 0.5f, 0f) * facing;
+        Vector3 right = Quaternion.Euler(0f, fov * 0.5f, 0f) * facing;
 
-        Vector3 left = Quaternion.Euler(
-            0f, -fov * 0.5f, 0f) * facing;
-
-        Vector3 right = Quaternion.Euler(
-            0f, fov * 0.5f, 0f) * facing;
-
-        Gizmos.DrawLine(
-            origin, origin + left * sightRange);
-
-        Gizmos.DrawLine(
-            origin, origin + right * sightRange);
-
-        Gizmos.DrawLine(
-            origin, origin + facing * sightRange);
+        Gizmos.DrawLine(origin, origin + left * sightRange);
+        Gizmos.DrawLine(origin, origin + right * sightRange);
+        Gizmos.DrawLine(origin, origin + facing * sightRange);
 
         if (player != null)
         {
             Gizmos.color = Color.red;
-
-            Gizmos.DrawWireSphere(
-                player.position, catchDistance);
+            Gizmos.DrawWireSphere(player.position, catchDistance);
         }
     }
 }

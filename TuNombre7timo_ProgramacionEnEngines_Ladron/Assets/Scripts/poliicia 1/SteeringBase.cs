@@ -49,17 +49,14 @@ public abstract class SteeringBase : MonoBehaviour
 
         velocity = Flat(rb.linearVelocity);
 
-        steering = Vector3.ClampMagnitude(
-            Flat(steering), maxForce);
+        steering = Vector3.ClampMagnitude(Flat(steering), maxForce);
 
         if (avoidanceEnabled)
             steering += GetAvoidance();
 
         steering = Flat(steering) / Mathf.Max(mass, 0.01f);
 
-        velocity = Vector3.ClampMagnitude(
-            velocity + steering * Time.fixedDeltaTime,
-            maxSpeed);
+        velocity = Vector3.ClampMagnitude(velocity + steering * Time.fixedDeltaTime,maxSpeed);
 
         rb.linearVelocity = velocity;
         rb.angularVelocity = Vector3.zero;
@@ -74,24 +71,13 @@ public abstract class SteeringBase : MonoBehaviour
 
     private void UpdateFacing()
     {
-        Vector3 desiredDirection =
-            velocity.sqrMagnitude > 0.01f
-            ? velocity.normalized
-            : facing;
+        Vector3 desiredDirection = velocity.sqrMagnitude > 0.01f ? velocity.normalized : facing;
 
-        facing = Vector3.RotateTowards(
-            facing,
-            desiredDirection,
-            turnRate * Mathf.Deg2Rad * Time.fixedDeltaTime,
-            0f
-        ).normalized;
+        facing = Vector3.RotateTowards(facing,desiredDirection,turnRate * Mathf.Deg2Rad * Time.fixedDeltaTime,0f).normalized;
 
         if (rotateBody && facing.sqrMagnitude > 0.0001f)
         {
-            rb.MoveRotation(
-                Quaternion.LookRotation(
-                    facing,
-                    Vector3.up));
+            rb.MoveRotation( Quaternion.LookRotation(facing,Vector3.up));
         }
     }
 

@@ -8,20 +8,14 @@ public abstract class PathFollowingBehaviour
     [Header("Path Following")]
     [SerializeField] protected float nodeRadius = 1f;
 
-    protected LinkedList<Transform> path =
-        new LinkedList<Transform>();
-
+    protected LinkedList<Transform> path = new LinkedList<Transform>();
     protected LinkedListNode<Transform> currentNode;
-
     private bool forward = true;
 
     protected void AddNode(Transform node)
     {
-        if (node == null)
-            return;
-
+        if (node == null) return;
         path.AddLast(node);
-
         if (currentNode == null)
             currentNode = path.First;
     }
@@ -30,8 +24,7 @@ public abstract class PathFollowingBehaviour
     {
         get
         {
-            return currentNode != null
-                && currentNode.Value != null;
+            return currentNode != null && currentNode.Value != null;
         }
     }
 
@@ -39,17 +32,13 @@ public abstract class PathFollowingBehaviour
     {
         get
         {
-            return HasPath
-                ? currentNode.Value.position
-                : transform.position;
+            return HasPath ? currentNode.Value.position : transform.position;
         }
     }
 
     protected Vector3 FollowPath()
     {
-        return HasPath
-            ? Seek(CurrentNodePos)
-            : Vector3.zero;
+        return HasPath ? Seek(CurrentNodePos) : Vector3.zero;
     }
 
     protected bool ReachedNode()
@@ -59,8 +48,7 @@ public abstract class PathFollowingBehaviour
 
     protected void AdvanceNode()
     {
-        if (path.Count < 2 || currentNode == null)
-            return;
+        if (path.Count < 2 || currentNode == null) return;
 
         if (forward)
         {
@@ -96,21 +84,17 @@ public abstract class PathFollowingBehaviour
              n != null;
              n = n.Next)
         {
-            if (n.Value == null)
-                continue;
+            if (n.Value == null) continue;
 
             Gizmos.color = Color.yellow;
 
-            Gizmos.DrawWireSphere(
-                n.Value.position, nodeRadius);
+            Gizmos.DrawWireSphere(n.Value.position, nodeRadius);
 
             if (n.Next != null && n.Next.Value != null)
             {
                 Gizmos.color = Color.magenta;
 
-                Gizmos.DrawLine(
-                    n.Value.position,
-                    n.Next.Value.position);
+                Gizmos.DrawLine(n.Value.position,n.Next.Value.position);
             }
         }
 
@@ -118,8 +102,7 @@ public abstract class PathFollowingBehaviour
         {
             Gizmos.color = Color.cyan;
 
-            Gizmos.DrawSphere(
-                CurrentNodePos, 0.15f);
+            Gizmos.DrawSphere(CurrentNodePos, 0.15f);
         }
     }
 }
