@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 // Se encarga solo de recoger los PickupItem que le pasas por referencia.
 public abstract class PlayerPickupBehaviour : MonoBehaviour
 {
-    [Header("Objetos (arrastra aqui los PickupItem)")]
+    [Header("Objetos recogidos")]
     [SerializeField] private PickupItem[] pickups;
     [SerializeField] private float pickupRange = 1.5f;
 
@@ -15,7 +15,6 @@ public abstract class PlayerPickupBehaviour : MonoBehaviour
     protected virtual void Awake()
     {
         // Recoger: teclado, gamepad y mouse 
-        // Recoger: E / botón A del gamepad / clic izquierdo del mouse
         interactAction = new InputAction("Interact", InputActionType.Button);
         interactAction.AddBinding("<Keyboard>/e");
         interactAction.AddBinding("<Gamepad>/buttonSouth");
@@ -37,7 +36,7 @@ public abstract class PlayerPickupBehaviour : MonoBehaviour
         interactAction.Dispose();
     }
 
-    // ¿Se pulso el botón de recoger en este frame? (llámalo una vez por frame)
+    //se pulso el botón de recoger en este frame?
     protected bool WantsPickup()
     {
         return interactAction.WasPressedThisFrame();
@@ -69,7 +68,7 @@ public abstract class PlayerPickupBehaviour : MonoBehaviour
         return true;
     }
 
-    // Lo llama PickupItem al ser recogido
+    //llama PickupItem al ser recogido
     public void AddItem(string itemId)
     {
         items.Add(itemId);

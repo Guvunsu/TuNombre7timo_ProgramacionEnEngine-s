@@ -1,11 +1,4 @@
 using UnityEngine;
-
-// WANDER del Policía 2 (plano XZ), hereda de Police2CollisionAvoidance.
-// Cambios para que el wander funcione bien junto a las paredes:
-//  1) Si la evasión está activa, el punto del círculo se ORIENTA hacia donde escapa la evasión;
-//     así el wander ayuda a salir de la pared en vez de empujar contra ella.
-//  2) Si se queda casi parado (atorado) por un rato, entra en modo ESCAPE: se va hacia atrás
-//     con un ángulo al azar durante un momento y luego retoma el wander.
 public abstract class WanderSteeringBehaviour : Police2CollisionAvoidance
 {
     [Header("Wander")]
@@ -57,10 +50,10 @@ public abstract class WanderSteeringBehaviour : Police2CollisionAvoidance
             stuckTimer = 0f;
             escapeTimer = escapeDuration;
 
-            // Hacia atrás (la cara frontal apuntaba a la pared) con un ángulo al azar
+            //escapa hacia atras y dando un giro 
             escapeDir = (Quaternion.Euler(0f, Random.Range(-60f, 60f), 0f) * -heading).normalized;
 
-            // El wander continúa desde esa dirección cuando termine el escape
+            //wander continúa desde esa dirección cuando termine el escape
             wanderAngle = Mathf.Atan2(escapeDir.z, escapeDir.x);
 
             return Seek(transform.position + escapeDir * circleDistance * 1.5f);
@@ -69,7 +62,7 @@ public abstract class WanderSteeringBehaviour : Police2CollisionAvoidance
 
         if (IsAvoiding)
         {
-            // Hay pared adelante: el punto apunta hacia donde escapa la evasión
+            //pared adelante, el punto apunta hacia donde escapa la evasión
             wanderAngle = Mathf.Atan2(LastAvoidance.z, LastAvoidance.x);
         } else
         {

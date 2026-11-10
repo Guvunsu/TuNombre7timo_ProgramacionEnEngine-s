@@ -1,6 +1,4 @@
-
 using UnityEngine;
-
 [RequireComponent(typeof(Rigidbody))]
 public abstract class SteeringBase : MonoBehaviour
 {
@@ -25,9 +23,7 @@ public abstract class SteeringBase : MonoBehaviour
 
         rb.useGravity = false;
         rb.isKinematic = false;
-        rb.constraints |= RigidbodyConstraints.FreezePositionY
-                       | RigidbodyConstraints.FreezeRotationX
-                       | RigidbodyConstraints.FreezeRotationZ;
+        rb.constraints |= RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
         facing = Flat(startFacing);
 

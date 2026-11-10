@@ -1,8 +1,6 @@
-
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-
 public class HackComputer : MonoBehaviour
 {
     private enum HackEffect
@@ -25,7 +23,7 @@ public class HackComputer : MonoBehaviour
 
     [Header("Pregunta de hackeo")]
     [SerializeField, TextArea]
-    private string question = "Escribe la pregunta aqui";
+    private string question = "Escribir pregunta";
 
     [SerializeField]
     private string correctAnswer = "respuesta";

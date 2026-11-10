@@ -1,30 +1,21 @@
 using UnityEngine;
 
-// COLLISION AVOIDANCE del Policía 2 (plano XZ).
-// Cambios para que NO se quede trabado en las paredes:
-//  - El lado de escape ya no depende de 'facing' (que parpadea en un choque de frente): se elige
-//    con la normal de la pared y, si es casi de frente, se CONSERVA el lado elegido antes.
-//  - La fuerza de escape = normal de la pared + lateral (se aleja Y se desliza).
-//  - El SphereCast arranca un poco ATRÁS del agente: si el cubo está pegado a la pared,
-//    una esfera que empieza tocándola no la detecta; así sí.
-//  - Expone IsAvoiding y LastAvoidance para que el Wander apunte hacia donde se escapa
-//    en lugar de empujar contra la pared.
 public abstract class Police2CollisionAvoidance : ArrivalBehaviour
 {
     [Header("Police 2 Avoidance")]
-    [SerializeField] private LayerMask obstacleMask;         // capa de las paredes (NO la de los policías)
+    [SerializeField] private LayerMask obstacleMask;        
 
     [SerializeField] private float lookAhead = 2f;
-    [SerializeField] private float agentRadius = 0.45f;      // cubo de lado 1 => ~0.45
+    [SerializeField] private float agentRadius = 0.45f;     
     [SerializeField] private float sideSensorAngle = 35f;
-    [SerializeField] private float maxAvoidForce = 10f;      // que sea >= maxForce para que gane al seek/wander
-    [SerializeField] private float backOffset = 0.3f;        // cuánto retrocede el origen del SphereCast
+    [SerializeField] private float maxAvoidForce = 10f;      
+    [SerializeField] private float backOffset = 0.3f;        
 
     // Los usa el Wander
     protected bool IsAvoiding { get; private set; }
     protected Vector3 LastAvoidance { get; private set; }
 
-    private int avoidSign = 1;                               // lado de escape elegido (+1 / -1)
+    private int avoidSign = 1; // lado de escape elegido +1 o -1
 
     protected override void Awake()
     {
@@ -80,7 +71,7 @@ public abstract class Police2CollisionAvoidance : ArrivalBehaviour
         if (direction.sqrMagnitude < 0.001f)
             return Vector3.zero;
 
-        // El origen retrocede un poco para detectar paredes que ya casi tocamos
+        // El origen retrocede un poco para detectar paredes que ya casi tocamos para lo del SphereCast
         Vector3 origin = transform.position - direction * backOffset;
 
         if (!Physics.SphereCast(
@@ -110,13 +101,9 @@ public abstract class Police2CollisionAvoidance : ArrivalBehaviour
 
         // Sensor frontal: lateral perpendicular a la dirección de avance
         Vector3 side = Vector3.Cross(Vector3.up, direction).normalized;
-
-        // Si la pared está inclinada, escapa hacia el lado al que apunta su normal.
-        // Si es casi de frente (d ~ 0), conserva el lado que ya había elegido (evita el parpadeo).
         float d = Vector3.Dot(side, normal);
 
-        if (Mathf.Abs(d) > 0.2f)
-            avoidSign = d > 0f ? 1 : -1;
+        if (Mathf.Abs(d) > 0.2f) avoidSign = d > 0f ? 1 : -1;
 
         Vector3 away = (normal + side * avoidSign).normalized;
 

@@ -29,7 +29,7 @@ public class PlayerController : PlayerPickupBehaviour
                        | RigidbodyConstraints.FreezeRotationX
                        | RigidbodyConstraints.FreezeRotationZ;
 
-        // Mover: teclado (WASD y flechas) y gamepad
+        //teclado y gamepad
         moveAction = new InputAction("Move", InputActionType.Value, expectedControlType: "Vector2");
 
         moveAction.AddCompositeBinding("2DVector")
@@ -70,7 +70,7 @@ public class PlayerController : PlayerPickupBehaviour
     {
         moveInput = Vector2.ClampMagnitude(moveAction.ReadValue<Vector2>(), 1f);
         bool hasInput = moveInput.sqrMagnitude > 0.01f;
-        bool wantsPickup = WantsPickup();                     // viene de la clase padre
+        bool wantsPickup = WantsPickup();// viene de la clase padre
 
         switch (state)
         {

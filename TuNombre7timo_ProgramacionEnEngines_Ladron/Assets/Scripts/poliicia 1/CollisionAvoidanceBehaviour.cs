@@ -1,6 +1,4 @@
-
 using UnityEngine;
-
 public abstract class CollisionAvoidanceBehaviour : ArrivalBehaviour
 {
     [Header("Collision Avoidance")]

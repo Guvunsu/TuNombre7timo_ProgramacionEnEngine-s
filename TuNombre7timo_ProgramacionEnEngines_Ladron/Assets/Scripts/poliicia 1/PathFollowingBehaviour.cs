@@ -1,45 +1,35 @@
-
 using System.Collections.Generic;
 using UnityEngine;
-
-public abstract class PathFollowingBehaviour
-    : CollisionAvoidanceBehaviour
+public abstract class PathFollowingBehaviour: CollisionAvoidanceBehaviour
 {
     [Header("Path Following")]
     [SerializeField] protected float nodeRadius = 1f;
 
-    // Lista ligada que contiene la ruta del policía.
-    protected LinkedList<Transform> path =
-        new LinkedList<Transform>();
-
-    // Nodo al que se dirige actualmente el policía.
+    //ruta del policía.
+    protected LinkedList<Transform> path =  new LinkedList<Transform>();
+    // Nodo al que se dirige actualmente
     protected LinkedListNode<Transform> currentNode;
-
-    // Indica si recorre la ruta hacia delante o hacia atrás.
+    //recorre la ruta hacia delante o hacia atrás.
     private bool forward = true;
 
-    // ---------------- ACCESO A LA LISTA ----------------
-
-    // Permite que HackComputer consulte la ruta.
+    //acceso a la lista para
+    // Permite HackComputer.cs consulte la ruta
     public LinkedList<Transform> Path
     {
         get { return path; }
     }
-
-    // Permite consultar el nodo actual.
+    //Permite consultar el nodo actual.
     public LinkedListNode<Transform> CurrentNode
     {
         get { return currentNode; }
     }
-
     // Comprueba si un nodo es el nodo actual.
     public bool IsCurrentNode(LinkedListNode<Transform> node)
     {
         return node != null && node == currentNode;
     }
 
-    // ---------------- AGREGAR NODOS ----------------
-
+    //agregar nodos
     protected void AddNode(Transform node)
     {
         if (node == null)
@@ -51,14 +41,12 @@ public abstract class PathFollowingBehaviour
             currentNode = path.First;
     }
 
-    // ---------------- SEGUIMIENTO ORIGINAL ----------------
-
+    //seguimiento original
     protected bool HasPath
     {
         get
         {
-            return currentNode != null &&
-                   currentNode.Value != null;
+            return currentNode != null && currentNode.Value != null;
         }
     }
 
@@ -66,23 +54,18 @@ public abstract class PathFollowingBehaviour
     {
         get
         {
-            return HasPath
-                ? currentNode.Value.position
-                : transform.position;
+            return HasPath ? currentNode.Value.position : transform.position;
         }
     }
 
     protected Vector3 FollowPath()
     {
-        return HasPath
-            ? Seek(CurrentNodePos)
-            : Vector3.zero;
+        return HasPath ? Seek(CurrentNodePos): Vector3.zero;
     }
 
     protected bool ReachedNode()
     {
-        return HasPath &&
-               DistTo(CurrentNodePos) <= nodeRadius;
+        return HasPath && DistTo(CurrentNodePos) <= nodeRadius;
     }
 
     protected void AdvanceNode()
@@ -113,27 +96,20 @@ public abstract class PathFollowingBehaviour
         }
     }
 
-    // ---------------- MANIPULACIÓN DE LA LISTA ----------------
-
+    //manipulacion de la lista
     // Elimina el nodo indicado.
     public void RemoveNode(LinkedListNode<Transform> node)
     {
-        if (!ContainsNode(node))
-            return;
+        if (!ContainsNode(node)) return;
 
         // Si eliminamos el nodo actual, elegimos el siguiente
         // según la dirección de recorrido del policía.
         if (node == currentNode)
         {
-            LinkedListNode<Transform> nextNode = forward
-                ? node.Next ?? node.Previous
-                : node.Previous ?? node.Next;
-
+            LinkedListNode<Transform> nextNode = forward ? node.Next ?? node.Previous : node.Previous ?? node.Next;
             currentNode = nextNode;
         }
-
         path.Remove(node);
-
         if (path.Count == 0)
             currentNode = null;
     }
@@ -141,13 +117,11 @@ public abstract class PathFollowingBehaviour
     // Duplica el valor del nodo después de él.
     public void DuplicateNode(LinkedListNode<Transform> node)
     {
-        if (!ContainsNode(node))
-            return;
-
+        if (!ContainsNode(node)) return;
         path.AddAfter(node, node.Value);
     }
 
-    // Mueve el nodo una posición hacia el inicio de la lista.
+    // mover el nodo al principio de la lista
     public void MoveNodeEarlier(LinkedListNode<Transform> node)
     {
         if (!ContainsNode(node) || node.Previous == null)
@@ -159,7 +133,7 @@ public abstract class PathFollowingBehaviour
         path.AddBefore(previous, node);
     }
 
-    // Mueve el nodo una posición hacia el final de la lista.
+    // mover el nodo al final de la lista
     public void MoveNodeLater(LinkedListNode<Transform> node)
     {
         if (!ContainsNode(node) || node.Next == null)
@@ -171,13 +145,13 @@ public abstract class PathFollowingBehaviour
         path.AddAfter(next, node);
     }
 
-    // Invierte el orden completo de la ruta.
+    //invertir los nodos de la lista
     public void ReversePath()
     {
         if (path.Count < 2)
             return;
 
-        // Guardamos los valores y la posición del nodo actual.
+        // guardar la posiciona ctual del nodo y su valores
         List<Transform> nodes = new List<Transform>(path);
         int currentIndex = 0;
         int index = 0;
@@ -192,7 +166,6 @@ public abstract class PathFollowingBehaviour
                 currentIndex = index;
                 break;
             }
-
             index++;
         }
 
@@ -218,7 +191,7 @@ public abstract class PathFollowingBehaviour
         return node != null && node.List == path;
     }
 
-    // ---------------- GIZMOS ----------------
+    //Gizmos 
 
     protected override void OnDrawGizmos()
     {
@@ -232,8 +205,7 @@ public abstract class PathFollowingBehaviour
             n != null;
             n = n.Next)
         {
-            if (n.Value == null)
-                continue;
+            if (n.Value == null) continue;
 
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(n.Value.position, nodeRadius);
@@ -241,10 +213,7 @@ public abstract class PathFollowingBehaviour
             if (n.Next != null && n.Next.Value != null)
             {
                 Gizmos.color = Color.magenta;
-
-                Gizmos.DrawLine(
-                    n.Value.position,
-                    n.Next.Value.position);
+                Gizmos.DrawLine( n.Value.position,n.Next.Value.position);
             }
         }
 

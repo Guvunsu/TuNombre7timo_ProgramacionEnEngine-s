@@ -4,7 +4,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-
 public class HackPanelUI : MonoBehaviour
 {
     [Header("Referencias UI")]
@@ -16,12 +15,10 @@ public class HackPanelUI : MonoBehaviour
 
     [Header("Mensajes")]
     [SerializeField]
-    private string successMessage =
-        "ACCESO CONCEDIDO - Sistema hackeado";
+    private string successMessage = "ACCESO CONCEDIDO - Sistema hackeado";
 
     [SerializeField]
-    private string failMessage =
-        "ACCESO DENEGADO - Respuesta incorrecta";
+    private string failMessage = "ACCESO DENEGADO - Respuesta incorrecta";
 
     public event Action Hacked;
     public event Action Closed;
@@ -57,13 +54,7 @@ public class HackPanelUI : MonoBehaviour
 
     private void Update()
     {
-        bool cancel =
-            (Keyboard.current != null &&
-             Keyboard.current.escapeKey.wasPressedThisFrame)
-            ||
-            (Gamepad.current != null &&
-             Gamepad.current.buttonEast.wasPressedThisFrame);
-
+        bool cancel = (Keyboard.current != null &&  Keyboard.current.escapeKey.wasPressedThisFrame) || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame);
         if (cancel && IsOpen)
             Close();
     }
@@ -111,15 +102,11 @@ public class HackPanelUI : MonoBehaviour
 
     public void Submit()
     {
-        if (hacked || answerInput == null)
-            return;
+        if (hacked || answerInput == null) return;
 
         string typed = answerInput.text.Trim();
 
-        if (string.Equals(
-            typed,
-            correctAnswer?.Trim(),
-            StringComparison.OrdinalIgnoreCase))
+        if (string.Equals( typed, correctAnswer?.Trim(),StringComparison.OrdinalIgnoreCase))
         {
             hacked = true;
 

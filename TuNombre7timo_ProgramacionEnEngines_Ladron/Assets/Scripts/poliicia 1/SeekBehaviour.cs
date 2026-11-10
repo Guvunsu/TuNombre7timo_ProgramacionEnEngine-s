@@ -1,6 +1,4 @@
-
 using UnityEngine;
-
 public abstract class SeekBehaviour : SteeringBase
 {
     protected Vector3 Seek(Vector3 target)

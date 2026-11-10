@@ -68,8 +68,7 @@ public class Police1_FSM : PathFollowingBehaviour
 
     private void ChangeState(State newState)
     {
-        if (state == newState)
-            return;
+        if (state == newState)   return;
 
         if (showStateLogs)
         {
@@ -88,8 +87,7 @@ public class Police1_FSM : PathFollowingBehaviour
     {
         if (!HasPath)
         {
-            Debug.LogWarning("Police1_FSM: el nodo actual ya no existe", this);
-            return;
+            Debug.LogWarning("Police1_FSM: el nodo actual ya no existe", this);  return;
         }
 
         bool sees = CanSeePlayer();
@@ -175,7 +173,7 @@ public class Police1_FSM : PathFollowingBehaviour
                 {
                     ChangeState(State.CHASE);
                 }
-                // sistema Game Over.PENDIENTE PORQUE NO ME LO PIDIERON :3
+                // puedo poner el GameOver aca, pero no m elo pidieron(para un futuro hacerlo)
                 break;
 
             case State.COME_BACK:
@@ -191,8 +189,6 @@ public class Police1_FSM : PathFollowingBehaviour
 
                 if (ReachedNode())
                 {
-                    // Se reincorpora en el nodo actual.
-                    // El siguiente avance ocurrira despues de IDLE.
                     ChangeState(State.IDLE);
                     steering = Vector3.zero;
                 }
