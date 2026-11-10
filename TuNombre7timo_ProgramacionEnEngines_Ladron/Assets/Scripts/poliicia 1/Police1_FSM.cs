@@ -94,8 +94,7 @@ public class Police1_FSM : PathFollowingBehaviour
 
         bool sees = CanSeePlayer();
 
-        if (sees)
-            lastSeenPos = player.position;
+        if (sees) lastSeenPos = player.position;
 
         Vector3 steering = Vector3.zero;
 
@@ -176,7 +175,7 @@ public class Police1_FSM : PathFollowingBehaviour
                 {
                     ChangeState(State.CHASE);
                 }
-                // Aqui! sistema de Game Over.
+                // sistema Game Over.PENDIENTE PORQUE NO ME LO PIDIERON :3
                 break;
 
             case State.COME_BACK:
