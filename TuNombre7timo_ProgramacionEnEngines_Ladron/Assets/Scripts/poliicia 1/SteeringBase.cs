@@ -1,6 +1,4 @@
 using UnityEngine;
-
-[RequireComponent(typeof(Rigidbody))]
 public abstract class SteeringBase : MonoBehaviour
 {
     [SerializeField] protected float maxSpeed = 3f;

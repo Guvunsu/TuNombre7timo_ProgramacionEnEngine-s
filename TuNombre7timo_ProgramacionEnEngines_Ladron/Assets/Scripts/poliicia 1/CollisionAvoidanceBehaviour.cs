@@ -12,9 +12,11 @@ public abstract class CollisionAvoidanceBehaviour : ArrivalBehaviour
     /// si esta quieto no evita nada
     /// obtiene la direccion del movimiento del policia
     /// lanza un spherecast para detectar si hay un obstáculo en la direccion en la que se mueve el agente.
-    /// si encuentra un obstaculo se aleja del obstáculo.
-    /// se desliza lateralmente por la pared para no quedarse pegado a esta
+    /// 
+    /// encuentra un obstaculo se aleja del obstáculo.
+    /// se desliza lateralmente por la pared para no quedarse pegado a esta (Producto Cruz) Toma dos vectores y devuelve un tercero que forma un ángulo de 90 grados (es perpendicular)
     /// devuelve la fuerza de evasion
+    /// 
     /// Si no hay obstáculos, devuelve cero su fuerza de evasion
     /// </summary>
     protected override Vector3 GetAvoidance()

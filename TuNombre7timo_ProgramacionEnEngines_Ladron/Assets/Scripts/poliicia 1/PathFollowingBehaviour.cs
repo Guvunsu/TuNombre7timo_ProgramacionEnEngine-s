@@ -16,7 +16,7 @@ public class PathFollowingBehaviour : CollisionAvoidanceBehaviour
     /// Agregar un punto a la ruta.
     /// evita agregar nodos nulos (es una seguridad)
     /// añade el nodo al final de la ruta
-    /// si es el primer nodo, lo establece como actual
+    /// si es el primer nodo, lo establece como actual (primero)
     /// </summary>
     public void AddNode(Transform node)
     {
@@ -49,7 +49,8 @@ public class PathFollowingBehaviour : CollisionAvoidanceBehaviour
 
     /// <summary>
     /// Para seguir la ruta 
-    /// Persigo el nodo actual usando seek si hay ruta, síguela, si no hay ruta, no hagas nada"
+    /// si hay ruta, persigo el nodo actual usando seek con su pos actual y del objetivo,
+    /// si no hay ruta, no hagas nada"
     /// </summary>
     protected Vector3 FollowPath()
     {
@@ -59,7 +60,7 @@ public class PathFollowingBehaviour : CollisionAvoidanceBehaviour
 
     /// <summary>
     /// Comprueba si llegó al nodo actual.
-    /// verifica si la distancia es menor o igual al radio permitido
+    /// regresa y verifica que si hay ruta y si la distancia es menor o igual que al radio permitido ( para detectarlo)
     /// </summary>
     protected bool ReachedNode()
     {
@@ -69,11 +70,17 @@ public class PathFollowingBehaviour : CollisionAvoidanceBehaviour
     /// <summary>
     /// Pasar al siguiente nodo.
     /// se sale si no existe un nodo actual
-    /// avanza al siguiente nodo o vuelve al primero 
+    /// si hay un nodo existente adelante del actual, si es verdadero avanza a ese siguiente
+    /// si no hay siguiente,vuelve al primero 
     /// </summary>
     protected void AdvanceNode()
     {
         if (currentNode == null) return;
-        currentNode = currentNode.Next != null ? currentNode.Next : path.First;
+
+        if (currentNode.Next != null)
+        {
+            currentNode = currentNode.Next;
+        }  
+        else  currentNode = path.First;
     }
 }
