@@ -1,92 +1,40 @@
 using UnityEngine;
-public abstract class WanderSteeringBehaviour : Police2CollisionAvoidance
+
+public abstract class WanderSteeringBehaviour : CollisionAvoidanceBehaviour
 {
     [Header("Wander")]
-    [SerializeField] private float circleDistance = 2f;      
-    [SerializeField] private float circleRadius = 1.5f;      
-    [SerializeField] private float angleChange = 300f;       
-    [SerializeField] private float wanderWeight = 0.8f;
-
-    [Header("Anti-atoramiento")]
-    [SerializeField] private float stuckSpeed = 0.25f;
-    [SerializeField] private float stuckTime = 0.6f;
-    [SerializeField] private float escapeDuration = 0.8f;
+    [SerializeField] private float circleDistance = 2f;
+    [SerializeField] private float circleRadius = 1.5f;
+    [SerializeField] private float angleChange = 300f;
 
     private float wanderAngle;
-    private Vector3 circleCenter;
-    private Vector3 wanderTarget;
-
     private float stuckTimer;
-    private float escapeTimer;
-    private Vector3 escapeDir;
 
-    protected override void Awake()
-    {
-        base.Awake();
-
-        wanderAngle = Random.Range(0f, Mathf.PI * 2f);
-    }
+    // Caminar sin rumbo fijo.
     protected Vector3 Wander()
     {
-        float dt = Time.fixedDeltaTime;
-        Vector3 heading = Flat(facing).normalized;
-
-        if (escapeTimer > 0f)
-        {
-            escapeTimer -= dt;
-
-            circleCenter = transform.position;
-            wanderTarget = transform.position + escapeDir * circleDistance * 1.5f;
-
-            return Seek(wanderTarget);
-        }
-
-        //detecto que me atoro
-        if (velocity.magnitude < stuckSpeed) stuckTimer += dt;
-        else stuckTimer = 0f;
-
-        if (stuckTimer >= stuckTime)
-        {
+        // Si lleva mucho tiempo casi parado, está atorado: da media vuelta.
+        if (velocity.magnitude < 0.25f)
+            stuckTimer += Time.fixedDeltaTime;
+        else
             stuckTimer = 0f;
-            escapeTimer = escapeDuration;
 
-            //escapa hacia atras y dando un giro 
-            escapeDir = (Quaternion.Euler(0f, Random.Range(-60f, 60f), 0f) * -heading).normalized;
-
-            //wander continúa desde esa dirección cuando termine el escape
-            wanderAngle = Mathf.Atan2(escapeDir.z, escapeDir.x);
-
-            return Seek(transform.position + escapeDir * circleDistance * 1.5f);
-        }
-        circleCenter = transform.position + heading * circleDistance;
-
-        if (IsAvoiding)
+        if (stuckTimer > 1f)
         {
-            //pared adelante, el punto apunta hacia donde escapa la evasión
-            wanderAngle = Mathf.Atan2(LastAvoidance.z, LastAvoidance.x);
-        } else
-        {
-            wanderAngle += Random.Range(-1f, 1f) * angleChange * Mathf.Deg2Rad * dt;
+            facing = -facing;
+            stuckTimer = 0f;
         }
 
-        // Punto sobre el círculo: (cos θ, 0, sin θ) es un vector unitario en el plano XZ
-        Vector3 displacement = new Vector3(Mathf.Cos(wanderAngle), 0f, Mathf.Sin(wanderAngle)) * circleRadius;
+        // El círculo está enfrente del policía.
+        Vector3 center = transform.position + facing * circleDistance;
 
-        wanderTarget = circleCenter + displacement;
+        // Cambiar un poco el ángulo al azar.
+        wanderAngle += Random.Range(-1f, 1f) * angleChange * Mathf.Deg2Rad * Time.fixedDeltaTime;
 
-        // Wander = Seek a un punto que cambia
-        return Seek(wanderTarget) * wanderWeight;
-    }
+        // Punto sobre el círculo.
+        Vector3 point = center + new Vector3(Mathf.Cos(wanderAngle), 0f, Mathf.Sin(wanderAngle)) * circleRadius;
 
-    protected override void OnDrawGizmos()
-    {
-        base.OnDrawGizmos();
-        if (!Application.isPlaying) return;
-
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(circleCenter, circleRadius);
-        Gizmos.color = escapeTimer > 0f ? Color.magenta : Color.red;
-        Gizmos.DrawSphere(wanderTarget, 0.15f);
-        Gizmos.DrawLine(transform.position, wanderTarget);
+        // Ir hacia ese punto.
+        return Seek(point);
     }
 }

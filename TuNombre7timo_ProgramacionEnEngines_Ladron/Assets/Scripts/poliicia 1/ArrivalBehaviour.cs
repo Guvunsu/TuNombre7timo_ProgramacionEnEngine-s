@@ -1,29 +1,30 @@
-
 using UnityEngine;
-
 public abstract class ArrivalBehaviour : SeekBehaviour
 {
-    [Header("Arrival")]
     [SerializeField] protected float slowingRadius = 2f;
-
+    /// <summary>
+    /// Calcula la dirección hacia el objetivo
+    /// Obtiene la distancia al objetivo
+    /// Si ya llego, frena
+    /// Usa la velocidad máxima por defecto
+    /// Reduce la velocidad suavemente cuando está cerca
+    /// Calcula la velocidad deseada
+    /// Devuelve la fuerza de steering
+    /// </summary>
     protected Vector3 Arrive(Vector3 target)
     {
-        Vector3 offset = Flat(target - transform.position);
-        float distance = offset.magnitude;
+        Vector3 direction = Flat(target - transform.position);
+        float distance = direction.magnitude;
 
-        if (distance < 0.001f)
-            return -velocity;
+        if (distance < 0.001f) return -velocity;
 
         float speed = maxSpeed;
 
         if (distance < slowingRadius)
         {
-            speed = maxSpeed * distance
-                    / Mathf.Max(slowingRadius, 0.01f);
+            speed = maxSpeed * distance / slowingRadius;
         }
-
-        Vector3 desired = offset.normalized * speed;
-
+        Vector3 desired = direction.normalized * speed;
         return desired - velocity;
     }
 }

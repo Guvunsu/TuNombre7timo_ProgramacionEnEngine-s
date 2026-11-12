@@ -1,7 +1,9 @@
+
 using UnityEngine;
 
 public class Police2_FSM : WanderSteeringBehaviour
 {
+    // Estados del policía.
     private enum State
     {
         WANDER,
@@ -9,67 +11,45 @@ public class Police2_FSM : WanderSteeringBehaviour
         CATCH
     }
 
-    [Header("FSM")]
     [SerializeField] private State state = State.WANDER;
-    [SerializeField] private bool showStateLogs = true;
 
-    [Header("Zona Wander")]
+    [Header("Zona de patrullaje")]
     [SerializeField] private Transform wanderCenter;
     [SerializeField] private float wanderAreaRadius = 8f;
 
     [Header("Jugador")]
     [SerializeField] private Transform player;
-
     [SerializeField] private float sightRange = 6f;
     [SerializeField] private float fov = 90f;
-    [SerializeField] private float eyeHeight = 0.5f;
-    [SerializeField] private LayerMask sightBlockMask;
     [SerializeField] private float catchDistance = 1.4f;
     [SerializeField] private float loseTime = 2f;
+    [SerializeField] private LayerMask sightBlockMask;
 
-    private float lostTimer;
+    [Header("Derrota")]
+    [SerializeField] private SceneController script_sceneController;
+    [SerializeField] private float caughtTime = 3f;
+
+    private float timer;
+    private float caughtTimer;
     private Vector3 lastSeenPos;
-    private bool returningToZone;
 
     protected override void Awake()
     {
         base.Awake();
-        lostTimer = loseTime;
+
         lastSeenPos = transform.position;
-
-        if (player == null)
-        {
-            Debug.LogWarning("Police2_FSM: falta asignar Player",this);
-        }
-
-        if (wanderCenter == null)
-        {
-            Debug.LogWarning("Police2_FSM: falta Wander Center",this);
-        }
-    }
-
-    private void ChangeState(State newState)
-    {
-        if (state == newState) return;
-
-        if (showStateLogs)
-        {
-            Debug.Log($"Police2: {state} -> {newState}",this);
-        }
-        state = newState;
-        if (state == State.CHASE)
-        {
-            lostTimer = loseTime;
-        }
+        timer = loseTime;
     }
 
     private void FixedUpdate()
     {
+        if (player == null)
+            return;
+
         bool seesPlayer = CanSeePlayer();
+
         if (seesPlayer)
-        {
             lastSeenPos = player.position;
-        }
 
         Vector3 steering = Vector3.zero;
 
@@ -77,122 +57,111 @@ public class Police2_FSM : WanderSteeringBehaviour
         {
             case State.WANDER:
 
+                // Regresar al centro si sale de su zona.
+                if (wanderCenter != null && DistTo(wanderCenter.position) > wanderAreaRadius)
+                    steering = Arrive(wanderCenter.position);
+                else
+                    steering = Wander();
+
                 if (seesPlayer)
-                {
                     ChangeState(State.CHASE);
-                    break;
-                }
-                steering = WanderInsideZone();
+
                 break;
+
             case State.CHASE:
+
                 if (seesPlayer)
                 {
-                    lostTimer = loseTime;
+                    timer = loseTime;
+                    steering = Seek(player.position);
 
-                    steering =Seek(player.position);
-
-                    if (DistTo(player.position)<= catchDistance)
-                    {
+                    if (DistTo(player.position) <= catchDistance)
                         ChangeState(State.CATCH);
-                    }
                 } else
                 {
-                    lostTimer -= Time.fixedDeltaTime;
-
+                    timer -= Time.fixedDeltaTime;
                     steering = Arrive(lastSeenPos);
 
-                    if (lostTimer <= 0f)
-                    {
+                    if (timer <= 0)
                         ChangeState(State.WANDER);
-                    }
                 }
+
                 break;
+
             case State.CATCH:
+
+                Debug.Log("Estado CATCH");
 
                 steering = Arrive(player.position);
 
+                caughtTimer -= Time.fixedDeltaTime;
+
+                Debug.Log("Tiempo restante: " + caughtTimer);
+
+                if (caughtTimer <= 0)
+                {
+                    Debug.Log("Intentando cargar derrota");
+
+                    if (script_sceneController == null)
+                    {
+                        Debug.LogError("SceneController no asignado");
+                        return;
+                    }
+
+                    script_sceneController.LoadLoose();
+                    return;
+                }
+
                 if (DistTo(player.position) > catchDistance * 1.5f)
                 {
+                    Debug.Log("El jugador escapó");
                     ChangeState(State.CHASE);
                 }
 
                 break;
         }
+
         Move(steering);
     }
 
-    private Vector3 WanderInsideZone()
+    // Cambiar de estado.
+    private void ChangeState(State newState)
     {
-        if (wanderCenter == null)
-            return Wander();
+        if (state == newState)
+            return;
 
-        float distance =DistTo(wanderCenter.position);
+        state = newState;
 
-        if (distance > wanderAreaRadius)
-        {
-            returningToZone = true;
-        } else if (distance < wanderAreaRadius * 0.6f)
-        {
-            returningToZone = false;
-        }
+        if (state == State.CHASE)
+            timer = loseTime;
 
-        if (returningToZone)
-        {
-            return Arrive(wanderCenter.position);
-        }
-        return Wander();
+        if (state == State.CATCH)
+            caughtTimer = caughtTime;
+
+        Debug.Log("Policia 2 nuevo estado: " + state);
     }
 
+    // Comprobar si el policía puede ver al jugador.
     private bool CanSeePlayer()
     {
-        if (player == null) return false;
+        Vector3 direction = Flat(player.position - transform.position);
 
-        Vector3 toPlayer =Flat(player.position-transform.position);
-        float distance = toPlayer.magnitude;
+        float distance = direction.magnitude;
 
-        if (distance > sightRange) return false;
-        if (distance < 0.01f) return false;
-
-        float angle =Vector3.Angle( facing,toPlayer.normalized);
-
-        if (angle > fov * 0.5f) return false;
-
-        Vector3 origin =transform.position + Vector3.up * eyeHeight;
-        Vector3 target = player.position + Vector3.up * eyeHeight;
-
-        if (Physics.Linecast(origin,target,sightBlockMask,QueryTriggerInteraction.Ignore))
-        {
+        if (distance > sightRange || distance < 0.001f)
             return false;
-        }
+
+        float angle = Vector3.Angle(transform.forward, direction.normalized);
+
+        if (angle > fov / 2f)
+            return false;
+
+        Vector3 origin = transform.position + Vector3.up * 0.5f;
+        Vector3 target = player.position + Vector3.up * 0.5f;
+
+        if (Physics.Linecast(origin, target, sightBlockMask))
+            return false;
+
         return true;
-    }
-
-    protected override void OnDrawGizmos()
-    {
-        base.OnDrawGizmos();
-
-        if (wanderCenter != null)
-        {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(wanderCenter.position,wanderAreaRadius);
-        }
-
-        if (!Application.isPlaying) return;
-
-        Vector3 origin = transform.position + Vector3.up * eyeHeight;
-        Gizmos.color = Color.white;
-        Vector3 left = Quaternion.Euler( 0f,-fov*0.5f,0f)*facing;
-        Vector3 right = Quaternion.Euler(0f,fov * 0.5f,0f)*facing;
-        Gizmos.DrawLine(origin,origin + left * sightRange);
-
-        Gizmos.DrawLine(origin,origin + right * sightRange);
-
-        Gizmos.DrawLine(origin,origin + facing * sightRange);
-
-        if (player != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(player.position,catchDistance);
-        }
     }
 }

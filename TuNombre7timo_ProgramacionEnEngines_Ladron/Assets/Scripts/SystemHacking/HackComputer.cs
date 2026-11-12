@@ -1,101 +1,87 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 public class HackComputer : MonoBehaviour
 {
-    private enum HackEffect
-    {
-        RemoveNode,
-        DuplicateNode,
-        MoveNodeEarlier,
-        MoveNodeLater,
-        ReversePath
-    }
-
     [Header("Referencias")]
     [SerializeField] private PlayerController player;
     [SerializeField] private HackPanelUI panel;
-    [SerializeField] private PathFollowingBehaviour target;
     [SerializeField] private GameObject promptObject;
 
     [Header("Interaccion")]
     [SerializeField] private float interactRange = 2f;
 
-    [Header("Pregunta de hackeo")]
-    [SerializeField, TextArea]
-    private string question = "Escribir pregunta";
-
-    [SerializeField]
-    private string correctAnswer = "respuesta";
-
-    [Header("Efecto al hackear")]
-    [SerializeField]
-    private HackEffect effect = HackEffect.RemoveNode;
+    [Header("Pregunta")]
+    [SerializeField] private string question = "Escribe la respuesta";
+    [SerializeField] private string correctAnswer = "respuesta";
 
     private InputAction hackAction;
     private bool hacked;
-    private bool promptShown;
 
     private void Awake()
     {
+        // F o X para abrir.
         hackAction = new InputAction("Hack", InputActionType.Button);
-
         hackAction.AddBinding("<Keyboard>/f");
-        hackAction.AddBinding("<Mouse>/rightButton");
         hackAction.AddBinding("<Gamepad>/buttonWest");
     }
 
     private void OnEnable()
     {
-        hackAction?.Enable();
+        hackAction.Enable();
     }
 
     private void OnDisable()
     {
-        hackAction?.Disable();
+        hackAction.Disable();
 
         if (panel != null)
         {
             panel.Hacked -= OnHacked;
             panel.Closed -= OnClosed;
+
+            if (panel.IsOpen)
+                panel.Close();
         }
 
-        if (panel != null && panel.IsOpen)
-            panel.Close();
+        LockPlayer(false);
 
-        SetPrompt(false);
+        if (promptObject != null)
+            promptObject.SetActive(false);
     }
 
     private void OnDestroy()
     {
-        hackAction?.Dispose();
+        hackAction.Dispose();
     }
 
     private void Update()
     {
-        if (player == null || panel == null || target == null)
+        if (player == null || panel == null)
             return;
 
-        Vector3 offset = player.transform.position - transform.position;
-        offset.y = 0f;
+        if (panel.IsOpen)
+            return;
 
-        bool inRange =
-            offset.sqrMagnitude <= interactRange * interactRange;
+        // Comprobar distancia con el jugador.
+        float distance = Vector3.Distance(transform.position, player.transform.position);
 
-        bool canInteract = inRange && !panel.IsOpen;
+        bool canInteract = distance <= interactRange && !hacked;
 
-        SetPrompt(canInteract);
+        if (promptObject != null)
+            promptObject.SetActive(canInteract);
 
+        // Abrir la computadora.
         if (canInteract && hackAction.WasPressedThisFrame())
             OpenPanel();
     }
 
+    // Abrir el panel.
     private void OpenPanel()
     {
-        if (hacked && panel.IsOpen)
-            return;
-
         LockPlayer(true);
+
+        if (promptObject != null)
+            promptObject.SetActive(false);
 
         panel.Hacked -= OnHacked;
         panel.Closed -= OnClosed;
@@ -103,61 +89,25 @@ public class HackComputer : MonoBehaviour
         panel.Hacked += OnHacked;
         panel.Closed += OnClosed;
 
-        panel.Open(question, correctAnswer, hacked);
+        panel.Open(question, correctAnswer, false);
     }
 
-    private void OnClosed()
-    {
-        panel.Hacked -= OnHacked;
-        panel.Closed -= OnClosed;
-
-        LockPlayer(false);
-    }
-
+    // Respuesta correcta.
     private void OnHacked()
     {
-        if (hacked)
-            return;
-
         hacked = true;
-        ApplyEffect();
     }
 
-    private void ApplyEffect()
+    // Cuando se cierra el panel.
+    private void OnClosed()
     {
-        if (target == null || target.Path == null)
-            return;
+        LockPlayer(false);
 
-        LinkedListNode<Transform> node = target.CurrentNode;
-
-        switch (effect)
-        {
-            case HackEffect.RemoveNode:
-                if (node != null)
-                    target.RemoveNode(node);
-                break;
-
-            case HackEffect.DuplicateNode:
-                if (node != null)
-                    target.DuplicateNode(node);
-                break;
-
-            case HackEffect.MoveNodeEarlier:
-                if (node != null)
-                    target.MoveNodeEarlier(node);
-                break;
-
-            case HackEffect.MoveNodeLater:
-                if (node != null)
-                    target.MoveNodeLater(node);
-                break;
-
-            case HackEffect.ReversePath:
-                target.ReversePath();
-                break;
-        }
+        panel.Hacked -= OnHacked;
+        panel.Closed -= OnClosed;
     }
 
+    // Bloquear o permitir el movimiento.
     private void LockPlayer(bool locked)
     {
         if (player == null)
@@ -165,33 +115,12 @@ public class HackComputer : MonoBehaviour
 
         player.enabled = !locked;
 
-        Rigidbody body = player.GetComponent<Rigidbody>();
+        Rigidbody rb = player.GetComponent<Rigidbody>();
 
-        if (locked && body != null)
+        if (locked && rb != null)
         {
-            body.linearVelocity = Vector3.zero;
-            body.angularVelocity = Vector3.zero;
-        }
-    }
-
-    private void SetPrompt(bool show)
-    {
-        if (promptObject == null || show == promptShown)
-            return;
-
-        promptShown = show;
-        promptObject.SetActive(show);
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, interactRange);
-
-        if (target != null)
-        {
-            Gizmos.color = Color.magenta;
-            Gizmos.DrawLine(transform.position, target.transform.position);
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
         }
     }
 }

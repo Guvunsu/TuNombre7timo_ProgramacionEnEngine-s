@@ -1,25 +1,24 @@
+
 using System;
-using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+
 public class HackPanelUI : MonoBehaviour
 {
-    [Header("Referencias UI")]
+    // Elementos de la interfaz.
     [SerializeField] private TMP_Text questionText;
     [SerializeField] private TMP_InputField answerInput;
+    [SerializeField] private TMP_Text feedbackText;
     [SerializeField] private Button submitButton;
     [SerializeField] private Button closeButton;
-    [SerializeField] private TMP_Text feedbackText;
 
-    [Header("Mensajes")]
-    [SerializeField]
-    private string successMessage = "ACCESO CONCEDIDO - Sistema hackeado";
+    // Mensajes.
+    [SerializeField] private string successMessage = "ACCESO CONCEDIDO";
+    [SerializeField] private string failMessage = "ACCESO DENEGADO";
 
-    [SerializeField]
-    private string failMessage = "ACCESO DENEGADO - Respuesta incorrecta";
-
+    // Avisar cuando se responde o se cierra.
     public event Action Hacked;
     public event Action Closed;
 
@@ -28,37 +27,27 @@ public class HackPanelUI : MonoBehaviour
     private string correctAnswer;
     private bool hacked;
 
-    private void OnEnable()
+    private void Start()
     {
         if (submitButton != null)
             submitButton.onClick.AddListener(Submit);
 
         if (closeButton != null)
             closeButton.onClick.AddListener(Close);
-
-        if (answerInput != null)
-            answerInput.onSubmit.AddListener(OnInputSubmit);
-    }
-
-    private void OnDisable()
-    {
-        if (submitButton != null)
-            submitButton.onClick.RemoveListener(Submit);
-
-        if (closeButton != null)
-            closeButton.onClick.RemoveListener(Close);
-
-        if (answerInput != null)
-            answerInput.onSubmit.RemoveListener(OnInputSubmit);
     }
 
     private void Update()
     {
-        bool cancel = (Keyboard.current != null &&  Keyboard.current.escapeKey.wasPressedThisFrame) || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame);
-        if (cancel && IsOpen)
+        // Cerrar con Escape o B.
+        if (IsOpen &&
+            ((Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
+             (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame)))
+        {
             Close();
+        }
     }
 
+    // Abrir el panel y mostrar la pregunta.
     public void Open(string question, string answer, bool alreadyHacked)
     {
         correctAnswer = answer;
@@ -68,45 +57,28 @@ public class HackPanelUI : MonoBehaviour
             questionText.text = question;
 
         if (answerInput != null)
-            answerInput.text = "";
-
-        if (feedbackText != null)
         {
-            feedbackText.text = hacked ? successMessage : "";
-
-            if (hacked)
-                feedbackText.color = Color.green;
+            answerInput.text = "";
+            answerInput.interactable = !hacked;
         }
 
-        SetInputEnabled(!hacked);
+        if (submitButton != null)
+            submitButton.interactable = !hacked;
+
+        if (feedbackText != null)
+            feedbackText.text = "";
 
         gameObject.SetActive(true);
-
-        if (!hacked)
-            StartCoroutine(FocusInput());
     }
 
-    public void Close()
-    {
-        if (!IsOpen)
-            return;
-
-        gameObject.SetActive(false);
-        Closed?.Invoke();
-    }
-
-    private void OnInputSubmit(string text)
-    {
-        Submit();
-    }
-
+    // Comprobar la respuesta.
     public void Submit()
     {
-        if (hacked || answerInput == null) return;
+        if (hacked || answerInput == null)
+            return;
 
-        string typed = answerInput.text.Trim();
-
-        if (string.Equals( typed, correctAnswer?.Trim(),StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(answerInput.text.Trim(), correctAnswer.Trim(),
+            StringComparison.OrdinalIgnoreCase))
         {
             hacked = true;
 
@@ -116,7 +88,11 @@ public class HackPanelUI : MonoBehaviour
                 feedbackText.color = Color.green;
             }
 
-            SetInputEnabled(false);
+            answerInput.interactable = false;
+
+            if (submitButton != null)
+                submitButton.interactable = false;
+
             Hacked?.Invoke();
         } else
         {
@@ -127,27 +103,16 @@ public class HackPanelUI : MonoBehaviour
             }
 
             answerInput.text = "";
-            answerInput.ActivateInputField();
         }
     }
 
-    private void SetInputEnabled(bool enabled)
+    // Cerrar el panel.
+    public void Close()
     {
-        if (answerInput != null)
-            answerInput.interactable = enabled;
+        if (!IsOpen)
+            return;
 
-        if (submitButton != null)
-            submitButton.interactable = enabled;
-    }
-
-    private IEnumerator FocusInput()
-    {
-        yield return null;
-
-        if (answerInput != null && IsOpen && answerInput.interactable)
-        {
-            answerInput.Select();
-            answerInput.ActivateInputField();
-        }
+        gameObject.SetActive(false);
+        Closed?.Invoke();
     }
 }

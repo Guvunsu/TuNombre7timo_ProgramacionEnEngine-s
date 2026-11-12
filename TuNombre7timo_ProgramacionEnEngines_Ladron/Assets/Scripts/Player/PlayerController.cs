@@ -1,36 +1,34 @@
+
 using UnityEngine;
 using UnityEngine.InputSystem;
+
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerController : PlayerPickupBehaviour
+public class PlayerController : MonoBehaviour
 {
-    private enum State { IDLE, MOVE, PICKUP }
+    private enum State
+    {
+        IDLE,
+        MOVE
+    }
 
-    [Header("FSM")]
     [SerializeField] private State state = State.IDLE;
-
-    [Header("Movimiento")]
     [SerializeField] private float moveSpeed = 4f;
-    [SerializeField] private float turnRate = 720f;        
-    [SerializeField] private float pickupTime = 0.3f;      
 
     private Rigidbody rb;
     private InputAction moveAction;
+    private InputAction collectAction;
 
     private Vector2 moveInput;
-    private float pickupTimer;
 
-    protected override void Awake()
+    // Objeto que el jugador está tocando.
+    private Collectable currentCollectable;
+
+    private void Awake()
     {
-        base.Awake();
-
         rb = GetComponent<Rigidbody>();
-        rb.useGravity = false;
-        rb.constraints |= RigidbodyConstraints.FreezePositionY
-                       | RigidbodyConstraints.FreezeRotationX
-                       | RigidbodyConstraints.FreezeRotationZ;
 
-        //teclado y gamepad
-        moveAction = new InputAction("Move", InputActionType.Value, expectedControlType: "Vector2");
+        // Movimiento con WASD.
+        moveAction = new InputAction("Move", InputActionType.Value);
 
         moveAction.AddCompositeBinding("2DVector")
             .With("Up", "<Keyboard>/w")
@@ -38,81 +36,87 @@ public class PlayerController : PlayerPickupBehaviour
             .With("Left", "<Keyboard>/a")
             .With("Right", "<Keyboard>/d");
 
+        // Movimiento con flechas.
         moveAction.AddCompositeBinding("2DVector")
             .With("Up", "<Keyboard>/upArrow")
             .With("Down", "<Keyboard>/downArrow")
             .With("Left", "<Keyboard>/leftArrow")
             .With("Right", "<Keyboard>/rightArrow");
 
+        // Movimiento con Gamepad.
         moveAction.AddBinding("<Gamepad>/leftStick");
         moveAction.AddBinding("<Gamepad>/dpad");
+
+        // Recoger objetos con E.
+        collectAction = new InputAction("Collect", InputActionType.Button);
+        collectAction.AddBinding("<Keyboard>/e");
     }
 
-    protected override void OnEnable()
+    private void OnEnable()
     {
-        base.OnEnable();
         moveAction.Enable();
+        collectAction.Enable();
     }
 
-    protected override void OnDisable()
+    private void OnDisable()
     {
-        base.OnDisable();
         moveAction.Disable();
+        collectAction.Disable();
     }
 
-    protected override void OnDestroy()
+    private void OnDestroy()
     {
-        base.OnDestroy();
         moveAction.Dispose();
+        collectAction.Dispose();
     }
 
     private void Update()
     {
-        moveInput = Vector2.ClampMagnitude(moveAction.ReadValue<Vector2>(), 1f);
-        bool hasInput = moveInput.sqrMagnitude > 0.01f;
-        bool wantsPickup = WantsPickup();// viene de la clase padre
+        // Leer el movimiento.
+        moveInput = Vector2.ClampMagnitude(
+            moveAction.ReadValue<Vector2>(), 1f
+        );
 
-        switch (state)
+        state = moveInput.sqrMagnitude > 0.01f
+            ? State.MOVE
+            : State.IDLE;
+
+        // Recoger el objeto al presionar E.
+        if (collectAction.WasPressedThisFrame() && currentCollectable != null)
         {
-            case State.IDLE:
-                if (wantsPickup && StartPickup()) break;
-                if (hasInput) state = State.MOVE;
-                break;
-
-            case State.MOVE:
-                if (wantsPickup && StartPickup()) break;
-                if (!hasInput) state = State.IDLE;
-                break;
-
-            case State.PICKUP:
-                pickupTimer -= Time.deltaTime;
-                if (pickupTimer <= 0f) state = State.IDLE;
-                break;
+            currentCollectable.Collect();
+            currentCollectable = null;
         }
     }
 
     private void FixedUpdate()
     {
-        // Solo se mueve en el estado MOVE
-        Vector3 direction = state == State.MOVE ? new Vector3(moveInput.x, 0f, moveInput.y): Vector3.zero;
+        Vector3 direction = Vector3.zero;
+
+        // Mover sobre los ejes X y Z.
+        if (state == State.MOVE)
+            direction = new Vector3(moveInput.x, 0f, moveInput.y);
 
         rb.linearVelocity = direction * moveSpeed;
         rb.angularVelocity = Vector3.zero;
 
-        // Girar hacia donde se mueve
-        if (direction.sqrMagnitude > 0.01f)
-        {
-            rb.MoveRotation(Quaternion.RotateTowards(rb.rotation,Quaternion.LookRotation(direction, Vector3.up),turnRate * Time.fixedDeltaTime));
-        }
+        // Girar hacia donde se mueve.
+        if (direction != Vector3.zero)
+            rb.MoveRotation(Quaternion.LookRotation(direction));
     }
 
-    // Usar TryPickup() de la clase padre y, si recogió algo, entra al estado PICKUP
-    private bool StartPickup()
+    // Detectar cuando toca un objeto.
+    private void OnCollisionEnter(Collision collision)
     {
-        if (!TryPickup()) return false;
+        currentCollectable = collision.collider.GetComponentInParent<Collectable>();
+    }
 
-        state = State.PICKUP;
-        pickupTimer = pickupTime;
-        return true;
+    // Dejar de detectar el objeto cuando se aleja.
+    private void OnCollisionExit(Collision collision)
+    {
+        Collectable collectable = collision.collider.GetComponentInParent<Collectable>();
+
+        if (collectable == currentCollectable)
+            currentCollectable = null;
     }
 }

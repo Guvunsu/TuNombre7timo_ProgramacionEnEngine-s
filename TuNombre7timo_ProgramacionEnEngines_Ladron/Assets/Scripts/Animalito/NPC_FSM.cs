@@ -1,50 +1,25 @@
 using UnityEngine;
+
 public class NPC_FSM : FleeSteeringBehaviour
 {
+    // Estados del NPC.
     private enum State
     {
         IDLE,
         FLEE
     }
 
-    [Header("FSM")]
     [SerializeField] private State state = State.IDLE;
-    [SerializeField] private bool showStateLogs = true;
 
     [Header("Amenaza")]
-    [SerializeField] private Transform threat;  // de quién huye 
-    [SerializeField] private float fleeDistance = 5f;        
-    [SerializeField] private float safeDistance = 8f;      
-
-    protected override void Awake()
-    {
-        base.Awake();
-
-        if (threat == null)
-        {
-            Debug.LogWarning("NPC_FSM: falta asignar la amenaza (threat).",this);
-        }
-    }
-
-    private void ChangeState(State newState)
-    {
-        if (state == newState) return;
-        if (showStateLogs)
-        {
-            Debug.Log($"NPC: {state} -> {newState}",this);
-        }
-
-        state = newState;
-        ResetFlee();
-    }
+    [SerializeField] private Transform threat;
+    [SerializeField] private float fleeDistance = 5f;
+    [SerializeField] private float safeDistance = 8f;
 
     private void FixedUpdate()
     {
         if (threat == null)
-        {
-            Move(Brake());
             return;
-        }
 
         float distance = DistTo(threat.position);
 
@@ -53,37 +28,41 @@ public class NPC_FSM : FleeSteeringBehaviour
         switch (state)
         {
             case State.IDLE:
+
                 steering = Brake();
 
+                // Si la amenaza se acerca, empieza a huir.
                 if (distance < fleeDistance)
+                {
                     ChangeState(State.FLEE);
+                }
+
                 break;
 
             case State.FLEE:
+
                 steering = Flee(threat.position);
 
+                // Si ya está lejos, se calma.
                 if (distance > safeDistance)
+                {
                     ChangeState(State.IDLE);
+                }
+
                 break;
         }
 
-        Move(steering); // Move() ya suma la evasión
+        Move(steering);
     }
 
-    protected override void OnDrawGizmos()
+    // Cambiar de estado.
+    private void ChangeState(State newState)
     {
-        base.OnDrawGizmos();
-        // Distancia para....
-        Gizmos.color = Color.red;//comenzar a huir 
-        Gizmos.DrawWireSphere(transform.position, fleeDistance);
-
-        Gizmos.color = Color.green;//sentirse seguro
-        Gizmos.DrawWireSphere(transform.position, safeDistance);
-
-        if (!Application.isPlaying || threat == null)
+        if (state == newState)
             return;
 
-        Gizmos.color = Color.yellow;//entre el npc y la amenaza
-        Gizmos.DrawLine(transform.position, threat.position);
+        state = newState;
+
+        Debug.Log("NPC nuevo estado: " + state);
     }
 }

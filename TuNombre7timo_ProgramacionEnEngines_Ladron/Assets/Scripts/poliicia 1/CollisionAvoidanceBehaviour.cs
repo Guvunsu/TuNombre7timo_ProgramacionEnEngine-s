@@ -5,69 +5,39 @@ public abstract class CollisionAvoidanceBehaviour : ArrivalBehaviour
     [SerializeField] private LayerMask obstacleMask;
     [SerializeField] private float lookAhead = 1.5f;
     [SerializeField] private float agentRadius = 0.45f;
-    [SerializeField] private float sideSensorAngle = 35f;
     [SerializeField] private float maxAvoidForce = 10f;
 
+    /// <summary>
+    /// Calcula la fuerza de evasion
+    /// si esta quieto no evita nada
+    /// obtiene la direccion del movimiento del policia
+    /// lanza un spherecast para detectar si hay un obstáculo en la direccion en la que se mueve el agente.
+    /// si encuentra un obstaculo se aleja del obstáculo.
+    /// se desliza lateralmente por la pared para no quedarse pegado a esta
+    /// devuelve la fuerza de evasion
+    /// Si no hay obstáculos, devuelve cero su fuerza de evasion
+    /// </summary>
     protected override Vector3 GetAvoidance()
     {
-        Vector3 heading = velocity.sqrMagnitude > 0.01f ? velocity.normalized : facing;
+        if (velocity.sqrMagnitude < 0.01f) return Vector3.zero;
+        Vector3 direction = velocity.normalized;
 
-        if (heading.sqrMagnitude < 0.0001f)
-            return Vector3.zero;
-
-        Vector3 force = Vector3.zero;
-
-        force += CastSensor(heading, lookAhead, true);
-        force += CastSensor(Quaternion.Euler(0f, -sideSensorAngle, 0f) * heading, lookAhead * 0.6f, false);
-
-        force += CastSensor(Quaternion.Euler(0f, sideSensorAngle, 0f) * heading, lookAhead * 0.6f, false);
-        return Vector3.ClampMagnitude(force, maxAvoidForce);
-    }
-
-    private Vector3 CastSensor(Vector3 direction,float length,bool addLateral)
-    {
-        direction = Flat(direction).normalized;
-
-        if (direction.sqrMagnitude < 0.0001f)
-            return Vector3.zero;
-
-        if (!Physics.SphereCast(transform.position,agentRadius,direction,out RaycastHit hit,length,obstacleMask,QueryTriggerInteraction.Ignore))
+        RaycastHit hit;
+        if (Physics.SphereCast(
+            transform.position,
+            agentRadius,
+            direction,
+            out hit,
+            lookAhead,
+            obstacleMask))
         {
-            return Vector3.zero;
+            Vector3 away = Flat(hit.normal).normalized;
+            Vector3 side = Vector3.Cross(Vector3.up, direction);
+            //Comprueba si la dirección lateral apunta hacia el lado correcto para esquivar el obstáculo.
+            //Si apunta al lado contrario, la invierte.
+            if (Vector3.Dot(side, away) < 0f) side = -side;
+            return (away + side).normalized * maxAvoidForce;
         }
-
-        float strength = 1f - Mathf.Clamp01(hit.distance / length);
-
-        Vector3 normal = Flat(hit.normal).normalized;
-
-        if (normal.sqrMagnitude < 0.0001f)
-            normal = -direction;
-
-        if (addLateral)
-        {
-            Vector3 side = Vector3.Cross(Vector3.up, direction).normalized;
-
-            if (Vector3.Dot(side, normal) < 0f)
-                side = -side;
-            normal = (normal + side).normalized;
-        }
-        return normal * maxAvoidForce * strength;
-    }
-
-    protected override void OnDrawGizmos()
-    {
-        base.OnDrawGizmos();
-        if (!Application.isPlaying) return;
-
-        Vector3 heading = velocity.sqrMagnitude > 0.01f ? velocity.normalized : facing;
-
-        Gizmos.color = Color.green;
-        Gizmos.DrawLine(transform.position,transform.position + heading * lookAhead);
-
-        Vector3 left = Quaternion.Euler(0f, -sideSensorAngle, 0f) * heading;
-        Vector3 right = Quaternion.Euler(0f, sideSensorAngle, 0f) * heading;
-
-        Gizmos.DrawLine(transform.position,transform.position + left * lookAhead * 0.6f);
-        Gizmos.DrawLine(transform.position,transform.position + right * lookAhead * 0.6f);
+        return Vector3.zero;
     }
 }
