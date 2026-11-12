@@ -64,11 +64,11 @@ public class Police1_FSM : PathFollowingBehaviour
     /// </summary>
     private void FixedUpdate()
     {
-        //si no hay ruta se sale
-        //compruebo si el jugador es visible
+        //si no hay ruta o jugador se sale
+        //compruebo si el jugador es visible para el policia
         //guardo la ultima pos donde el poli viu al jugador
         //e inicio una fuerza de frenado por el efecto de steering de SteeringBehaviour
-        if (!HasPath) return;
+        if (!HasPath || player == null) return;
         bool seesPlayer = ICanSeeThePlayerAndWalls();
         if (seesPlayer) lastSeenPos = player.position;
         Vector3 steering = Brake();
@@ -80,12 +80,12 @@ public class Police1_FSM : PathFollowingBehaviour
             //y si llego al punto de patrullaje se detiene
             case State.PATROL:
                 steering = Arrive(CurrentNodePos);
-                if (seesPlayer)   ChangeState(State.CHASE);
+                if (seesPlayer) ChangeState(State.CHASE);
                 else if (ReachedNode()) ChangeState(State.IDLE);
                 break;
-                //no aplico movimiento, voy restando el tiempo acumulativamente de espera
-                //si vio al jugador cambio al estado de persecucion,
-                //y si el tiempo es menor o igual cero avanza al siguiente nodo y pasa al estado de patrullaje
+            //no aplico movimiento, voy restando el tiempo acumulativamente de espera
+            //si vio al jugador cambio al estado de persecucion,
+            //y si el tiempo es menor o igual cero avanza al siguiente nodo y pasa al estado de patrullaje
             case State.IDLE:
                 steering = Vector3.zero;
                 timer -= Time.fixedDeltaTime;
@@ -96,13 +96,13 @@ public class Police1_FSM : PathFollowingBehaviour
                     ChangeState(State.PATROL);
                 }
                 break;
-                //si vio el jugador reinicia el tiempo para perder la vista al jugador,
-                //lo persigue al jugador si esta cerca su pos
+            //si vio el jugador reinicia el tiempo para perder la vista al jugador,
+            //lo persigue al jugador si esta cerca su pos
 
-                //si la distancia del jugador objetivo es menor o igual al alcance de capturarlo pasa al estado de captura
+            //si la distancia del jugador objetivo es menor o igual al alcance de capturarlo pasa al estado de captura
 
-                //si no, el tiempo del timer se va acumulando hacia atras tomando en consideracion que va hacia la ultima posicion conocida suavemente
-                //si el tiempo se acaba vuelve a patrullar
+            //si no, el tiempo del timer se va acumulando hacia atras tomando en consideracion que va hacia la ultima posicion conocida suavemente
+            //si el tiempo se acaba vuelve a patrullar
             case State.CHASE:
 
                 if (seesPlayer)
@@ -112,7 +112,8 @@ public class Police1_FSM : PathFollowingBehaviour
 
                     if (DistTo(player.position) <= catchDistance)
                         ChangeState(State.CATCH);
-                } else
+                }
+                else
                 {
                     timer -= Time.fixedDeltaTime;
                     steering = Arrive(lastSeenPos);
@@ -142,10 +143,10 @@ public class Police1_FSM : PathFollowingBehaviour
                 steering = Arrive(CurrentNodePos);
 
                 if (seesPlayer) ChangeState(State.CHASE);
-                else if (ReachedNode())ChangeState(State.IDLE);
+                else if (ReachedNode()) ChangeState(State.IDLE);
                 break;
         }
-        // Aplica el movimiento calculado
+        // Aplica el movimiento calculado segun su estado 
         Move(steering);
     }
 
@@ -164,7 +165,7 @@ public class Police1_FSM : PathFollowingBehaviour
         if (state == State.CATCH) caughtTimer = caughtTime;
         Debug.Log("Nuevo estado Police1: " + state);
     }
-    
+
     /// <summary>
     /// Comprueba si el policía puede ver al jugador
     /// verifica distancia,angulo de vision y para los obstaculos

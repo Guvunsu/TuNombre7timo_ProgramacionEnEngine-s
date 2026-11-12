@@ -38,15 +38,11 @@ public class HackComputer : MonoBehaviour
         {
             panel.Hacked -= OnHacked;
             panel.Closed -= OnClosed;
-
-            if (panel.IsOpen)
-                panel.Close();
+            if (panel.IsOpen) panel.Close();
         }
 
         LockPlayer(false);
-
-        if (promptObject != null)
-            promptObject.SetActive(false);
+        if (promptObject != null) promptObject.SetActive(false);
     }
 
     private void OnDestroy()
@@ -56,43 +52,32 @@ public class HackComputer : MonoBehaviour
 
     private void Update()
     {
-        if (player == null || panel == null)
-            return;
-
-        if (panel.IsOpen)
-            return;
+        if (player == null || panel == null)return;
+        if (panel.IsOpen)return;
 
         // Comprobar distancia con el jugador.
         float distance = Vector3.Distance(transform.position, player.transform.position);
-
         bool canInteract = distance <= interactRange && !hacked;
 
-        if (promptObject != null)
-            promptObject.SetActive(canInteract);
+        if (promptObject != null) promptObject.SetActive(canInteract);
 
         // Abrir la computadora.
-        if (canInteract && hackAction.WasPressedThisFrame())
-            OpenPanel();
+        if (canInteract && hackAction.WasPressedThisFrame()) OpenPanel();
     }
 
     // Abrir el panel.
     private void OpenPanel()
     {
         LockPlayer(true);
-
-        if (promptObject != null)
-            promptObject.SetActive(false);
-
+        if (promptObject != null) promptObject.SetActive(false);
         panel.Hacked -= OnHacked;
         panel.Closed -= OnClosed;
-
         panel.Hacked += OnHacked;
         panel.Closed += OnClosed;
-
         panel.Open(question, correctAnswer, false);
     }
 
-    // Respuesta correcta.
+    // R= correcta.
     private void OnHacked()
     {
         hacked = true;
@@ -102,7 +87,6 @@ public class HackComputer : MonoBehaviour
     private void OnClosed()
     {
         LockPlayer(false);
-
         panel.Hacked -= OnHacked;
         panel.Closed -= OnClosed;
     }
@@ -110,11 +94,9 @@ public class HackComputer : MonoBehaviour
     // Bloquear o permitir el movimiento.
     private void LockPlayer(bool locked)
     {
-        if (player == null)
-            return;
+        if (player == null)   return;
 
         player.enabled = !locked;
-
         Rigidbody rb = player.GetComponent<Rigidbody>();
 
         if (locked && rb != null)

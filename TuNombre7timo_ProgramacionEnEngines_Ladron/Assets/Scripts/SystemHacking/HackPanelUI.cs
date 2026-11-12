@@ -1,4 +1,3 @@
-
 using System;
 using TMPro;
 using UnityEngine;
@@ -7,14 +6,14 @@ using UnityEngine.UI;
 
 public class HackPanelUI : MonoBehaviour
 {
-    // Elementos de la interfaz.
+    [Header("Elementos de interfaz")]
     [SerializeField] private TMP_Text questionText;
     [SerializeField] private TMP_InputField answerInput;
     [SerializeField] private TMP_Text feedbackText;
     [SerializeField] private Button submitButton;
     [SerializeField] private Button closeButton;
 
-    // Mensajes.
+    [Header("Mensajes")]
     [SerializeField] private string successMessage = "ACCESO CONCEDIDO";
     [SerializeField] private string failMessage = "ACCESO DENEGADO";
 

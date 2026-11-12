@@ -7930,7 +7930,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1254534617
 Transform:
   m_ObjectHideFlags: 0
@@ -12752,6 +12752,8 @@ MonoBehaviour:
     m_Bits: 64
   script_sceneController: {fileID: 2736547616126756316}
   caughtTime: 2.5
+  timer: 0
+  caughtTimer: 0
 --- !u!1 &1842399424
 GameObject:
   m_ObjectHideFlags: 0
@@ -14317,6 +14319,8 @@ MonoBehaviour:
     m_Bits: 64
   script_sceneController: {fileID: 2736547616126756316}
   caughtTime: 2.5
+  timer: 0
+  caughtTimer: 0
 --- !u!114 &658444062315139345
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14355,6 +14359,8 @@ MonoBehaviour:
     m_Bits: 64
   script_sceneController: {fileID: 2736547616126756316}
   caughtTime: 2.5
+  timer: 0
+  caughtTimer: 0
 --- !u!65 &1615000843754945097
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -14910,6 +14916,8 @@ MonoBehaviour:
     m_Bits: 64
   script_sceneController: {fileID: 2736547616126756316}
   caughtTime: 2.5
+  timer: 0
+  caughtTimer: 0
 --- !u!65 &8793539414815516509
 BoxCollider:
   m_ObjectHideFlags: 0

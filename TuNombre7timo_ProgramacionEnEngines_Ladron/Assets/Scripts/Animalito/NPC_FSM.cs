@@ -1,8 +1,6 @@
 using UnityEngine;
-
 public class NPC_FSM : FleeSteeringBehaviour
 {
-    // Estados del NPC.
     private enum State
     {
         IDLE,
@@ -18,51 +16,38 @@ public class NPC_FSM : FleeSteeringBehaviour
 
     private void FixedUpdate()
     {
-        if (threat == null)
-            return;
-
+        if (threat == null) return;
         float distance = DistTo(threat.position);
-
         Vector3 steering = Vector3.zero;
 
         switch (state)
         {
             case State.IDLE:
-
                 steering = Brake();
-
                 // Si la amenaza se acerca, empieza a huir.
                 if (distance < fleeDistance)
                 {
                     ChangeState(State.FLEE);
                 }
-
                 break;
 
             case State.FLEE:
-
                 steering = Flee(threat.position);
-
                 // Si ya está lejos, se calma.
                 if (distance > safeDistance)
                 {
                     ChangeState(State.IDLE);
                 }
-
                 break;
         }
-
         Move(steering);
     }
 
     // Cambiar de estado.
     private void ChangeState(State newState)
     {
-        if (state == newState)
-            return;
-
+        if (state == newState) return;
         state = newState;
-
-        Debug.Log("NPC nuevo estado: " + state);
+        Debug.Log("nuevo estado NPC: " + state);
     }
 }
